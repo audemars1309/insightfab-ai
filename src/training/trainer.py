@@ -204,13 +204,25 @@ class Trainer:
         for epoch in range(self.start_epoch, self.epochs + 1):
             self.model.train()
             running = 0.0
+            n_steps = 0
+            n_bad = 0
             for lr_t, hr_t, _ in self.train_ld:
                 lr_t = lr_t.to(self.device, non_blocking=True)
                 hr_t = hr_t.to(self.device, non_blocking=True)
                 self.opt.zero_grad(set_to_none=True)
+                # AMP rule: autocast wraps ONLY the forward pass. The loss is
+                # computed in fp32 (pred.float()) — computing SSIM/Charbonnier in
+                # fp16 produces NaN gradients (a multiply overflows), which makes
+                # GradScaler skip every step and freezes the model.
                 with torch.autocast(device_type="cuda", enabled=self.use_amp):
                     pred = self.model(lr_t)
-                    loss, _ = self.criterion(pred, hr_t)
+                loss, _ = self.criterion(pred.float(), hr_t)
+                # Defense-in-depth: skip a non-finite loss so a rare transient can
+                # never corrupt weights or poison the epoch average. (GradScaler
+                # already skips non-finite *grad* steps; this guards the loss too.)
+                if not torch.isfinite(loss):
+                    n_bad += 1
+                    continue
                 self.scaler.scale(loss).backward()
                 if self.grad_clip > 0:
                     self.scaler.unscale_(self.opt)
@@ -220,10 +232,13 @@ class Trainer:
                 if self.ema:
                     self.ema.update(self.model)
                 running += loss.item()
+                n_steps += 1
             self.sched.step()
-            avg = running / max(1, len(self.train_ld))
+            avg = running / max(1, n_steps)
 
             msg = f"epoch {epoch:03d}/{self.epochs}  loss={avg:.4f}  lr={self.sched.get_last_lr()[0]:.2e}"
+            if n_bad:
+                msg += f"  [skipped {n_bad} non-finite-loss batches]"
             if epoch % self.val_every == 0 or epoch == self.epochs:
                 iid, ood = self._eval_model()
                 score = _composite(iid)
