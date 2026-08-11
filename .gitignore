@@ -6,8 +6,10 @@ venv/
 *.egg-info/
 
 # Dataset (large; provided separately by KLA — do not commit)
-data/
-semicon_dataset/
+# NOTE: leading slash anchors these to the repo root so they do NOT match the
+# source package src/data/ (an unanchored `data/` matched any nested dir).
+/data/
+/semicon_dataset/
 *.zip
 
 # Model checkpoints (large binaries; distribute per portal rules)
@@ -16,7 +18,7 @@ weights/*.pth
 
 # Generated outputs
 results/benchmark_out/
-output/
+/output/
 *.log
 
 # Secrets / environment
