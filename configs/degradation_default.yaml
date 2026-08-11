@@ -1,0 +1,15 @@
+# Default synthetic degradation config — calibrated to MEASURED training-data
+# statistics (see docs/synthetic_degradation.md). These are empirical observations
+# from our data, NOT the disclosed KLA pipeline.
+degradation:
+  scale: 2
+  # Default order applies noise AFTER downsampling, because the sigmas below were
+  # measured at LR. Any permutation of [downsample, speckle, gaussian] is valid.
+  order: [downsample, speckle, gaussian]
+  speckle_sigma: 0.15        # measured: residual std ≈ 0.15 · intensity
+  gauss_sigma: 0.013         # measured: additive floor ≈ 0.013
+  severity: 1.0
+  severity_range: [0.7, 1.3] # per-sample mixed severity for augmentation diversity
+  downsample_order: 3        # bicubic
+  anti_aliasing: true
+  clip_output: false         # keep out-of-[0,1] values like the real NoisyLR

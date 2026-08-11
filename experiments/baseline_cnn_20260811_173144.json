@@ -1,0 +1,31 @@
+{
+  "exp_id": "baseline_cnn_20260811_173144",
+  "model": "small_srcnn",
+  "params": 416593,
+  "seed": 42,
+  "epochs": 20,
+  "batch": 16,
+  "lr_patch": 64,
+  "channels": 48,
+  "blocks": 8,
+  "loss": "charbonnier",
+  "lr": 0.0002,
+  "device": "cuda",
+  "train_sec": 1659.7,
+  "checkpoint": "weights\\baseline_cnn_20260811_173144.pt",
+  "val_iid": {
+    "psnr": 27.688960251631812,
+    "ssim": 0.752559951491622,
+    "lpips": 0.2960591097664304,
+    "n": 293
+  },
+  "val_ood": {
+    "psnr": 28.683081712556692,
+    "ssim": 0.6766939886743728,
+    "lpips": 0.4269243259623181,
+    "n": 256
+  },
+  "timestamp": "2026-08-11T12:29:50.750261+00:00",
+  "host": "DRG-PC",
+  "gpu": "NVIDIA GeForce GTX 1650"
+}

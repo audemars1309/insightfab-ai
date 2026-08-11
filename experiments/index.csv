@@ -1,0 +1,2 @@
+exp_id,timestamp,model,params,seed,epochs,batch,lr_patch,loss,lr,device,iid_psnr,iid_ssim,iid_lpips,ood_psnr,ood_ssim,ood_lpips,train_sec,checkpoint
+baseline_cnn_20260811_173144,2026-08-11T12:29:50.750261+00:00,small_srcnn,416593,42,20,16,64,charbonnier,0.0002,cuda,27.688960251631812,0.752559951491622,0.2960591097664304,28.683081712556692,0.6766939886743728,0.4269243259623181,1659.7,weights\baseline_cnn_20260811_173144.pt

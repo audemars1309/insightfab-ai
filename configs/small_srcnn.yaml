@@ -1,0 +1,39 @@
+# SmallSRCNN baseline through the same training engine (for apples-to-apples runs).
+
+seed: 42
+deterministic: false
+device: null
+amp: true
+use_ema: true
+ema_decay: 0.999
+
+model:
+  name: small_srcnn
+  kwargs:
+    channels: 48
+    n_blocks: 8
+    scale: 2
+
+loss:
+  w_pixel: 1.0
+  w_ssim: 0.0
+  w_perceptual: 0.0
+  charbonnier_eps: 1.0e-3
+
+optim:
+  lr: 2.0e-4
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  eta_min: 1.0e-6
+
+train:
+  epochs: 30
+  batch: 16
+  lr_patch: 64
+  workers: 4
+  grad_clip: 0.0
+  val_every: 2
+  limit_train: 0
+
+val:
+  lpips_n: 96

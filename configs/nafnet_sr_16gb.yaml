@@ -1,0 +1,45 @@
+# NAFNet-SR training config — tuned for a single 16 GB NVIDIA GPU (Kaggle T4/P100, Colab).
+# Reproduces the competition checkpoint from this file + the fixed seed.
+
+seed: 42
+deterministic: false        # cudnn.benchmark on for speed; flip to true for bit-exactness
+device: null                # null -> cuda if available else cpu
+amp: true                   # mixed precision (fp16) — big speed/memory win on 16 GB
+use_ema: true               # validate & ship EMA weights (quality boost)
+ema_decay: 0.999
+
+model:
+  name: nafnet_sr
+  kwargs:
+    img_channels: 1
+    width: 32
+    enc_blocks: [2, 2, 4, 8]
+    middle_blocks: 12
+    dec_blocks: [2, 2, 2, 2]
+    scale: 2
+    drop: 0.0
+  # ~29.2M params. Fits 16 GB comfortably at the settings below (fp16).
+
+loss:
+  w_pixel: 1.0              # Charbonnier — fidelity
+  w_ssim: 0.10             # structural term (SSIM is an official metric)
+  w_perceptual: 0.0        # OFF by default (avoid hallucinating structure); tune cautiously
+  charbonnier_eps: 1.0e-3
+
+optim:
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+  betas: [0.9, 0.9]
+  eta_min: 1.0e-6
+
+train:
+  epochs: 200              # NAFNet-scale restoration benefits from long schedules
+  batch: 16                # ~fits 16 GB at patch 128 fp16; raise to 24-32 if memory allows
+  lr_patch: 128            # LR patch (HR = 256); 128 = full image (LR is 128x128)
+  workers: 4
+  grad_clip: 0.0
+  val_every: 5             # validate every 5 epochs (LPIPS subset) to save time
+  limit_train: 0           # 0 = all training pairs
+
+val:
+  lpips_n: 96              # LPIPS on first 96 val images during training; full set at the end

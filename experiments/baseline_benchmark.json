@@ -1,0 +1,13 @@
+﻿{
+  "artifact": "baseline_benchmark",
+  "checkpoint": "weights/final.pt",
+  "model": "small_srcnn",
+  "device": "cuda", "gpu": "NVIDIA GeForce GTX 1650", "fp16": true, "batch": 16,
+  "images": 400,
+  "stage_ms_per_img": {"read":0.24,"pre":0.09,"h2d":0.02,"model":44.72,"d2h":0.10,"post":0.14,"write":0.87},
+  "model_only_img_s": 22.4,
+  "end_to_end_img_s": 21.7,
+  "end_to_end_ms_per_img": 46.19,
+  "peak_gpu_mem_mb": 263.8,
+  "note": "GTX 1650 local; KLA evaluates on H100. Model dominates (96.8%); I/O pipeline already efficient; large memory headroom."
+}

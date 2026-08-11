@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Dataset (large; provided separately by KLA — do not commit)
+data/
+semicon_dataset/
+*.zip
+
+# Model checkpoints (large binaries; distribute per portal rules)
+weights/*.pt
+weights/*.pth
+
+# Generated outputs
+results/benchmark_out/
+output/
+*.log
+
+# Secrets / environment
+.env
+*.env
+.env.*
+*.key
+*.pem
+secrets.*
+
+# Local tool settings (machine-specific)
+.claude/
+
+# Official KLA sponsor documents (copyrighted material — not redistributed via this repo)
+KLA Problem Statement_explanation.pptx
+KLA_Problem Statement_Studen help document.pdf
+
+# OS / editor
+.DS_Store
+__MACOSX/
+.idea/
+.vscode/
+
+# Keep directory placeholders and small tracked artifacts
+!results/dataset_audit/**
+!experiments/**

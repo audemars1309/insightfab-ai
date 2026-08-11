@@ -1,0 +1,25 @@
+# InsightFab AI — KLA restoration pipeline dependencies
+# Exact versions used to produce the submitted results (local dev + cloud training).
+#
+# PyTorch is pinned to the CUDA 11.8 build (compatible with the local GTX 1650).
+# For a different CUDA/CPU target, install torch/torchvision from the matching
+# PyTorch index and keep the remaining pins:
+#     pip install torch==2.7.1 torchvision==0.22.1 --index-url https://download.pytorch.org/whl/cu118
+#
+# Core numerical / imaging
+numpy==2.4.6
+scipy==1.17.1
+scikit-image==0.26.0
+scikit-learn==1.9.0
+pillow==12.3.0
+pandas==3.0.5
+
+# Deep learning
+torch==2.7.1
+torchvision==0.22.1
+
+# Metrics / viz / utils
+lpips==0.1.4
+matplotlib==3.11.1
+tqdm==4.70.0
+pyyaml==6.0.3

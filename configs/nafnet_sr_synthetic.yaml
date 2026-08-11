@@ -1,0 +1,63 @@
+# Phase 9 ABLATION config: NAFNet-SR trained on official pairs + on-the-fly
+# synthetic pairs. Identical to configs/nafnet_sr_16gb.yaml except for the
+# `synthetic` block below. Run this ONLY when explicitly ablating synthetic data;
+# the default competition training (configs/nafnet_sr_16gb.yaml) has no synthetic
+# block and is completely unaffected.
+
+seed: 42
+deterministic: false
+device: null
+amp: true
+use_ema: true
+ema_decay: 0.999
+
+model:
+  name: nafnet_sr
+  kwargs:
+    img_channels: 1
+    width: 32
+    enc_blocks: [2, 2, 4, 8]
+    middle_blocks: 12
+    dec_blocks: [2, 2, 2, 2]
+    scale: 2
+    drop: 0.0
+
+loss:
+  w_pixel: 1.0
+  w_ssim: 0.10
+  w_perceptual: 0.0
+  charbonnier_eps: 1.0e-3
+
+optim:
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+  betas: [0.9, 0.9]
+  eta_min: 1.0e-6
+
+train:
+  epochs: 200
+  batch: 16
+  lr_patch: 128
+  workers: 4
+  grad_clip: 0.0
+  val_every: 5
+  limit_train: 0
+
+val:
+  lpips_n: 96
+
+# --- Phase 9 synthetic augmentation (opt-in) ---
+# Validation still uses ONLY real official pairs; synthetic augments training.
+synthetic:
+  enabled: true
+  synth_prob: 0.5            # fraction of training samples drawn synthetically
+  degradation:
+    scale: 2
+    order: [downsample, speckle, gaussian]
+    speckle_sigma: 0.15
+    gauss_sigma: 0.013
+    severity: 1.0
+    severity_range: [0.7, 1.3]
+    downsample_order: 3
+    anti_aliasing: true
+    clip_output: false

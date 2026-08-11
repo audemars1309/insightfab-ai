@@ -1,0 +1,21 @@
+# Cloud (Kaggle/Colab) dependencies.
+#
+# Kaggle and Colab ship a CUDA-matched PyTorch already installed for their GPU.
+# DO NOT reinstall torch there — forcing torch==2.7.1+cu118 can mismatch the
+# platform driver and slow or break CUDA. Install only what's missing on top of
+# the platform's torch/torchvision.
+#
+# Usage on Kaggle/Colab:
+#     pip install -q -r requirements-cloud.txt
+#
+# (scikit-image, scikit-learn, scipy, matplotlib, pandas, pyyaml, tqdm are
+#  usually preinstalled on Kaggle; listed here so a bare environment also works.)
+
+lpips==0.1.4
+scikit-image>=0.22
+scikit-learn>=1.3
+scipy>=1.11
+matplotlib>=3.7
+pandas>=2.0
+pyyaml>=6.0
+tqdm>=4.65
