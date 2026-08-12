@@ -30,9 +30,6 @@ results/benchmark_out/
 *.pem
 secrets.*
 
-# Local tool settings (machine-specific)
-.claude/
-
 # Official KLA sponsor documents (copyrighted material — not redistributed via this repo)
 KLA Problem Statement_explanation.pptx
 KLA_Problem Statement_Studen help document.pdf
