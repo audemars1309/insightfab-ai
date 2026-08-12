@@ -46,11 +46,13 @@ and EMA; `--epochs 80` sets the 80-epoch schedule.)
 `inference.py` loads it without any code changes.
 
 ## Validation results (held-out validation split — NOT hidden-test / leaderboard scores)
-Measured on `configs/split.json` (IID-val 293, OOD-val 256) with the epoch-55 checkpoint:
+Final best-checkpoint evaluation on the full validation split (`configs/split.json`:
+IID-val 293 images, OOD-val 256 images), epoch-55 checkpoint. LPIPS is computed over the
+full validation set here (the per-epoch history uses a 96-image LPIPS subset):
 
 | split | PSNR | SSIM | LPIPS |
 |---|---|---|---|
-| IID | 28.5625 | 0.78622 | 0.23497 |
+| IID | 28.5625 | 0.78622 | 0.2415 |
 | OOD | 29.6334 | 0.71502 | 0.28750 |
 
 These are our own validation numbers. The official competition score is computed by KLA on
