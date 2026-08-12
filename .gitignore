@@ -12,9 +12,10 @@ venv/
 /semicon_dataset/
 *.zip
 
-# Model checkpoints (large binaries; distribute per portal rules)
-weights/*.pt
-weights/*.pth
+# Model checkpoints (large binaries; distributed separately per portal rules).
+# Ignore the whole weights/ tree so nested experiment subdirs
+# (e.g. weights/nafnet_sr_A_e80/best.pt) are never accidentally committed.
+weights/
 
 # Generated outputs
 results/benchmark_out/
