@@ -51,11 +51,20 @@ class DegradationConfig:
     downsample_order: int = 3            # skimage interpolation (3 = bicubic)
     anti_aliasing: bool = True
     clip_output: bool = False            # keep out-of-[0,1] values like real NoisyLR
+    # Per-sample randomization (None = use the fixed order/kernel above; this keeps
+    # existing Phase-9 behavior unchanged). The true degradation order and kernel
+    # are undisclosed, so sampling across the plausible set improves robustness.
+    order_choices: tuple | None = None            # list of orders to sample per call
+    downsample_order_choices: tuple | None = None  # e.g. [1, 3] = bilinear/bicubic
 
     def validate(self):
-        for s in self.order:
-            if s not in STEPS:
-                raise ValueError(f"unknown degradation step '{s}'; allowed: {STEPS}")
+        orders = [self.order] + list(self.order_choices or [])
+        for order in orders:
+            for s in order:
+                if s not in STEPS:
+                    raise ValueError(f"unknown degradation step '{s}'; allowed: {STEPS}")
+            if "downsample" not in order:
+                raise ValueError(f"every order must contain 'downsample' (got {order})")
         if self.scale < 1:
             raise ValueError("scale must be >= 1")
         return self
@@ -63,8 +72,12 @@ class DegradationConfig:
     @classmethod
     def from_dict(cls, d: dict | None) -> "DegradationConfig":
         d = dict(d or {})
-        if "order" in d and d["order"] is not None:
+        if d.get("order") is not None:
             d["order"] = tuple(d["order"])
+        if d.get("order_choices") is not None:
+            d["order_choices"] = tuple(tuple(o) for o in d["order_choices"])
+        if d.get("downsample_order_choices") is not None:
+            d["downsample_order_choices"] = tuple(d["downsample_order_choices"])
         if d.get("severity_range") is not None:
             d["severity_range"] = tuple(d["severity_range"])
         return cls(**d).validate()
@@ -83,11 +96,11 @@ class DegradationSimulator:
         self.cfg = cfg.validate()
 
     # --- individual mechanisms --------------------------------------------
-    def _downsample(self, img: np.ndarray) -> np.ndarray:
+    def _downsample(self, img: np.ndarray, ds_order: int) -> np.ndarray:
         h, w = img.shape
         out = sk_resize(
             img, (h // self.cfg.scale, w // self.cfg.scale),
-            order=self.cfg.downsample_order,
+            order=ds_order,
             anti_aliasing=self.cfg.anti_aliasing,
             preserve_range=True,
         )
@@ -113,9 +126,18 @@ class DegradationSimulator:
         if self.cfg.severity_range is not None:
             sev *= float(rng.uniform(*self.cfg.severity_range))
 
-        for step in self.cfg.order:
+        # Per-sample order and downsample kernel (fixed if no choices given).
+        order = self.cfg.order
+        if self.cfg.order_choices:
+            order = self.cfg.order_choices[int(rng.integers(len(self.cfg.order_choices)))]
+        ds_order = self.cfg.downsample_order
+        if self.cfg.downsample_order_choices:
+            ds_order = int(self.cfg.downsample_order_choices[
+                int(rng.integers(len(self.cfg.downsample_order_choices)))])
+
+        for step in order:
             if step == "downsample":
-                img = self._downsample(img)
+                img = self._downsample(img, ds_order)
             elif step == "speckle":
                 img = self._speckle(img, rng, sev)
             elif step == "gaussian":

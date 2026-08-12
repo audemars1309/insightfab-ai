@@ -17,6 +17,7 @@ inference.py / benchmark.py load them without knowing the architecture.
 from __future__ import annotations
 
 import copy
+import json
 import time
 from pathlib import Path
 
@@ -136,6 +137,11 @@ class Trainer:
         self.lpips_n = cfg.get("val", {}).get("lpips_n", 64)
         self.start_epoch = 1
         self.best_score = -1e9
+        # per-metric best tracking (higher-is-better for psnr/ssim, lower for lpips)
+        self.metric_dirs = {"iid_psnr": 1, "iid_ssim": 1, "iid_lpips": -1,
+                            "ood_psnr": 1, "ood_ssim": 1, "ood_lpips": -1}
+        self.best_metrics = {}   # key -> {"value":.., "epoch":..}
+        self.history = []        # per-eval structured metrics for the validation curves
 
         print(f"[trainer] exp={self.exp_id} model={cfg['model']['name']} "
               f"params={self.n_params:,} device={self.device} amp={self.use_amp} "
@@ -153,6 +159,27 @@ class Trainer:
         m = self.ema.shadow if self.ema else self.model
         save_checkpoint(self.out_dir / name, m, self.cfg["model"]["name"],
                         self.cfg["model"].get("kwargs", {}), meta=meta)
+
+    def _update_metric_checkpoints(self, epoch: int, iid: dict, ood: dict):
+        """Save a checkpoint whenever any single metric hits a new best, and
+        append the full metric set to the validation-curve history."""
+        flat = {"iid_psnr": iid["psnr"], "iid_ssim": iid["ssim"], "iid_lpips": iid["lpips"],
+                "ood_psnr": ood["psnr"], "ood_ssim": ood["ssim"], "ood_lpips": ood["lpips"]}
+        improved = []
+        for key, direction in self.metric_dirs.items():
+            val = flat[key]
+            if val is None:
+                continue
+            cur = self.best_metrics.get(key)
+            if cur is None or direction * (val - cur["value"]) > 0:
+                self.best_metrics[key] = {"value": val, "epoch": epoch}
+                self._save_ship(f"best_{key}.pt", {"exp_id": self.exp_id, "epoch": epoch,
+                                                   "metric": key, "value": val,
+                                                   "val_iid": iid, "val_ood": ood})
+                improved.append(key)
+        self.history.append({"epoch": epoch, **flat})
+        (self.out_dir / "history.json").write_text(json.dumps(self.history, indent=2))
+        return improved
 
     def _save_resume(self, epoch: int):
         ck = {
@@ -243,12 +270,15 @@ class Trainer:
                 iid, ood = self._eval_model()
                 score = _composite(iid)
                 msg += (f"  IID[psnr={iid['psnr']:.3f} ssim={iid['ssim']:.4f} "
-                        f"lpips={iid['lpips']:.4f}]  OOD[psnr={ood['psnr']:.3f} ssim={ood['ssim']:.4f}]")
+                        f"lpips={iid['lpips']:.4f}]  OOD[psnr={ood['psnr']:.3f} ssim={ood['ssim']:.4f} "
+                        f"lpips={ood['lpips']:.4f}]")
+                improved = self._update_metric_checkpoints(epoch, iid, ood)
+                if improved:
+                    msg += "  *best[" + ",".join(k.replace("iid_", "i:").replace("ood_", "o:") for k in improved) + "]"
                 if score > self.best_score:
                     self.best_score = score
                     self._save_ship("best.pt", {"exp_id": self.exp_id, "epoch": epoch,
                                                 "val_iid": iid, "val_ood": ood})
-                    msg += "  *best"
             print(msg, flush=True)
             self._save_ship("last.pt", {"exp_id": self.exp_id, "epoch": epoch})
             self._save_resume(epoch)
@@ -281,6 +311,8 @@ class Trainer:
             "checkpoint": str((self.out_dir / "best.pt").relative_to(paths.REPO_ROOT)),
             "val_iid": iid,
             "val_ood": ood,
+            "best_metrics": self.best_metrics,     # per-metric best value + epoch
+            "history_file": str((self.out_dir / "history.json").relative_to(paths.REPO_ROOT)),
         }
         experiment.save_record(record)
         print("\n=== FINAL (best checkpoint) ===")

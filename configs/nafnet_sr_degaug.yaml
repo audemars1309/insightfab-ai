@@ -1,0 +1,72 @@
+# CANDIDATE (research direction): NAFNet-SR + calibrated on-the-fly re-degradation
+# + MS-SSIM/HF-consistency loss. Separate from the LOCKED baseline
+# (configs/nafnet_sr_16gb.yaml, weights/nafnet_sr_16gb_e200_v2/) — nothing here
+# overwrites the baseline. Architecture is unchanged; only data + loss differ.
+#
+# Validation ALWAYS uses the real official pairs (val_iid/val_ood from split.json).
+# Synthetic pairs are generated ONLY from the training GT ids (split["train"]).
+
+seed: 42
+deterministic: false
+device: null
+amp: true
+use_ema: true
+ema_decay: 0.999
+
+model:                       # UNCHANGED NAFNet-SR (29.2M)
+  name: nafnet_sr
+  kwargs:
+    img_channels: 1
+    width: 32
+    enc_blocks: [2, 2, 4, 8]
+    middle_blocks: 12
+    dec_blocks: [2, 2, 2, 2]
+    scale: 2
+    drop: 0.0
+
+loss:                        # metric-aligned + anti-hallucination
+  w_pixel: 1.0               # Charbonnier — pixel fidelity (protects PSNR)
+  w_ssim: 0.0                # replaced by MS-SSIM below
+  w_msssim: 0.20             # multi-scale structure (signal is 96% low/mid-band)
+  w_hf: 0.05                 # HF consistency — discourage fabricated detail (GT HF ~0)
+  w_perceptual: 0.0          # OFF (no hallucination)
+  charbonnier_eps: 1.0e-3
+
+optim:
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+  betas: [0.9, 0.9]
+  eta_min: 1.0e-6
+
+train:
+  epochs: 200
+  batch: 16
+  lr_patch: 128
+  workers: 4
+  grad_clip: 0.0
+  val_every: 5
+  limit_train: 0
+
+val:
+  lpips_n: 96
+
+# --- calibrated re-degradation (measured: sigma(I) = 0.009 + 0.156*I) ---
+synthetic:
+  enabled: true
+  synth_prob: 0.5            # ~half the training samples are freshly re-degraded
+  degradation:
+    scale: 2
+    order: [downsample, speckle, gaussian]     # fallback order
+    order_choices:                              # randomized per sample (order undisclosed)
+      - [downsample, speckle, gaussian]
+      - [speckle, downsample, gaussian]
+      - [speckle, gaussian, downsample]
+      - [gaussian, downsample, speckle]
+    speckle_sigma: 0.156      # measured speckle coefficient
+    gauss_sigma: 0.009        # measured additive Gaussian floor
+    severity: 1.0
+    severity_range: [0.7, 1.3]                  # level diversity
+    downsample_order: 3
+    downsample_order_choices: [1, 3]            # bilinear / bicubic (kernel undisclosed)
+    anti_aliasing: true
+    clip_output: false                          # keep out-of-[0,1] like real NoisyLR
