@@ -30,9 +30,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# --------------------------------------------------------------------------- #
+
 # Model — NAFNet-SR (verbatim from src/models/nafnet_sr.py). Do not modify.    #
-# --------------------------------------------------------------------------- #
 
 
 class LayerNorm2d(nn.Module):
@@ -171,9 +170,9 @@ class NAFNetSR(nn.Module):
         return base + out
 
 
-# --------------------------------------------------------------------------- #
+
 # Inference                                                                    #
-# --------------------------------------------------------------------------- #
+
 
 TARGET_SIZE = 256                      # required output resolution (H = W = 256)
 CHECKPOINT = Path(__file__).resolve().parent / "models" / "best.pt"
