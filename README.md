@@ -115,6 +115,21 @@ weights/nafnet_sr_A_e80/best.pt
 
 ---
 
+## Official evaluator command
+
+The KLA evaluator runs the submission with exactly:
+
+```bash
+python run.py <input-dir> <output-dir>
+```
+
+- `<input-dir>` contains the degraded `.npy` inputs.
+- `<output-dir>` is created automatically if it does not exist.
+- One restored `.npy` is written per input, with the **same filename**.
+- Each output is a grayscale `(256, 256)` `float32` array with values in `[0, 1]` and no NaN/Inf.
+- The final model is loaded automatically from `models/best.pt` — no flags or configuration needed.
+- Inference is fully offline: no API keys, no internet access, and no model downloads.
+
 ## Run inference
 
 Standalone — takes an input directory of degraded `.npy` files and writes restored `.npy`

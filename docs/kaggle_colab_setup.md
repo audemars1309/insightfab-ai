@@ -2,7 +2,7 @@
 
 The competition model (`configs/nafnet_sr_16gb.yaml`, ~29.2M params) trains on a single
 **16 GB GPU**. Local dev used a 4 GB GTX 1650 (smoke tests only); the code is identical.
-This guide is the **manual handoff** — Claude Code cannot drive the cloud GPU, so you run
+This guide is the **manual handoff** — the cloud GPU cannot be driven automatically, so you run
 these steps and bring the outputs back.
 
 **Fixed run identity (important):** always pass the SAME `--exp-id` on the first run and on
@@ -134,7 +134,7 @@ From `results/`:
 Plus (paste as text): the **full training console log** (per-epoch loss + validation curve),
 and the **GPU name + VRAM** (`!nvidia-smi`) and total wall-clock.
 
-With these, Claude will: verify `best.pt` through `inference.py`, re-evaluate metrics, update
+With these, the analysis step will: verify `best.pt` through `inference.py`, re-evaluate metrics, update
 the README/report tables and the comparison figure, and write the evidence-based decision
 (continue to more epochs / adjust loss / try synthetic / etc.). **No numbers are typed by
 hand** — all come from these files.
